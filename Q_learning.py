@@ -87,14 +87,12 @@ if __name__ == "__main__":
     INITIAL_EPS = 1.0
     EPS_DECAY = 0.995
 
-    print("Starting Q‐learning...")
     Q_table = Q_learning(
         num_episodes=NUM_EPISODES,
         gamma=GAMMA,
         epsilon=INITIAL_EPS,
         decay_rate=EPS_DECAY
     )
-    print("Q‐learning complete. Saving Q‐table to 'boston_Q_table.pkl'…")
 
     with open("boston_Q_table.pkl", "wb") as f:
         pickle.dump(Q_table, f)
