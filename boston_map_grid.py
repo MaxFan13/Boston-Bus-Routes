@@ -23,105 +23,123 @@ print("Rows with valid geometry:", len(gdf))
 # Reproject to NAD83 / Massachusetts Mainland for accurate plotting and measurements
 gdf = gdf.to_crs("EPSG:26986")
 
-# Plot the street segments
-gdf.plot(figsize=(12, 12), linewidth=1, edgecolor="black")
-plt.title("Boston Street Segments")
-plt.show()
+gdf['NBHD_R'].unique()
 
-# Initialize an undirected graph
-G = nx.Graph()
+# Step 1: Filter GeoDataFrame to only 'BOSTON'
+boston_gdf = gdf[gdf['NBHD_R'] == 'BOSTON']
 
-# Add edges from street segments to the graph
-for idx, row in gdf.iterrows():
+# Step 2: Build a new graph from BOSTON data only
+G_boston = nx.Graph()
+
+for idx, row in boston_gdf.iterrows():
     geom = row.geometry
     if isinstance(geom, LineString):
         geoms = [geom]
     elif isinstance(geom, MultiLineString):
         geoms = geom.geoms
     else:
-        print(f"Unexpected geometry type at index {idx}: {type(geom)}")
         continue
 
     for part in geoms:
         start = part.coords[0]
         end = part.coords[-1]
-        # Adding edge automatically adds nodes if they don't exist
-        G.add_edge(start, end, length=part.length, segment_id=row['SEGMENT_ID'])
+        G_boston.add_edge(start, end, length=part.length, segment_id=row['SEGMENT_ID'])
 
-# Find intersections: nodes with degree > 1
-intersections = [node for node, degree in G.degree if degree > 1]
-print(f"Number of intersections: {len(intersections)}")
+# Print total number of nodes and edges
+print("Total nodes:", G_boston.number_of_nodes())
+print("Total edges:", G_boston.number_of_edges())
 
-# Create GeoDataFrame of intersection points
-intersections_gdf = gpd.GeoDataFrame(
-    geometry=[Point(xy) for xy in intersections],
-    crs=gdf.crs
-)
+# --- Pick a node (e.g., first one) ---
+example_node = list(G_boston.nodes)[0]
+print("\nExample node:", example_node)
 
-# Plot intersections on top of street segments
-base = gdf.plot(figsize=(12, 12), linewidth=1, edgecolor="black")
-intersections_gdf.plot(ax=base, marker='o', color='red', markersize=10)
-plt.title("Street Segments with Intersections")
-plt.show()
+# --- Neighbors of the node ---
+neighbors = list(G_boston.neighbors(example_node))
+print("Neighbors:", neighbors)
 
-# Example: pick start and end nodes from graph G
-start = list(G.nodes)[70]
-end = list(G.nodes)[min(10, len(G.nodes)-1)]  # just pick a node within range
+# --- Edges connected to the node and their attributes (weights, etc.) ---
+for neighbor in neighbors:
+    edge_data = G_boston.get_edge_data(example_node, neighbor)
+    print(f"Edge from {example_node} to {neighbor}:")
+    print(f"  Length: {edge_data['length']:.2f}")
+    print(f"  Segment ID: {edge_data['segment_id']}")
 
-# Find shortest path by length
-path = nx.shortest_path(G, source=start, target=end, weight='length')
-print(f"Shortest path length: {len(path)} nodes")
+# --- All edges and their weights (lengths) ---
+print("\nAll edges and their weights (first 5 shown):")
+for u, v, data in list(G_boston.edges(data=True))[:5]:
+    print(f"Edge: {u} <-> {v}, Length: {data['length']:.2f}")
 
-path_xs = [coord[0] for coord in path]
-path_ys = [coord[1] for coord in path]
 
-# Example start, end, path, path_xs, path_ys defined before
+import time
+import networkx as nx
+import matplotlib.pyplot as plt
+import numpy as np
+from shapely.geometry import LineString, MultiLineString
+import geopandas as gpd
 
-fig, axes = plt.subplots(1, 2, figsize=(20, 12))  # 1 row, 2 cols: full and zoom
+# --- ASSUMES your G_boston and boston_gdf are already in memory ---
+# If not, re-run your snippet to build G_boston and boston_gdf first:
+#
+import geopandas as gpd
+import networkx as nx
+from shapely.geometry import LineString, MultiLineString
+import random
+"""
+gdf = gpd.read_file("your_street_segments.geojson")
+boston_gdf = gdf[gdf['NBHD_R'] == 'BOSTON']
+G_boston = nx.Graph()
+for idx, row in boston_gdf.iterrows():
+    geom = row.geometry
+    geoms = [geom] if isinstance(geom, LineString) else geom.geoms
+    for part in geoms:
+        start = part.coords[0]
+        end   = part.coords[-1]
+        G_boston.add_edge(start, end, length=part.length, segment_id=row['SEGMENT_ID'])
+"""
+# For this demo, let’s assume G_boston is already defined:
 
-# --- Plot 1: Full street network ---
-ax = axes[0]
-ax.set_title("Full Street Network with Path")
-for u, v in G.edges():
-    x = [u[0], v[0]]
-    y = [u[1], v[1]]
-    ax.plot(x, y, color='lightgray', linewidth=1)
+# 1) Pick two example nodes (you can replace with any nodes in G_boston)
+nodes = list(G_boston.nodes)
+start = nodes[random.randint(0, len(nodes) - 1)]
+goal  = nodes[random.randint(0, len(nodes) - 1)]
+print("Start:", start)
+print("Goal: ", goal)
 
-for i in range(len(path) - 1):
-    x = [path[i][0], path[i+1][0]]
-    y = [path[i][1], path[i+1][1]]
-    ax.plot(x, y, color='blue', linewidth=2)
+# 2) Define the Euclidean heuristic
+def euclidean(u, v):
+    ux, uy = u
+    vx, vy = v
+    return np.hypot(ux - vx, uy - vy)
 
-ax.scatter(path_xs, path_ys, color='blue', s=20)
-ax.scatter(*start, color='green', s=100, label='Start')
-ax.scatter(*end, color='red', s=100, label='End')
-ax.legend()
-ax.set_xlabel("X Coordinate (meters)")
-ax.set_ylabel("Y Coordinate (meters)")
+# 3) Compute the A* shortest path (by 'length' attribute)
+path = nx.astar_path(G_boston, start, goal,
+                     heuristic=euclidean,
+                     weight='length')
+total_length = nx.astar_path_length(G_boston, start, goal,
+                                    heuristic=euclidean,
+                                    weight='length')
+print(f"Found path with {len(path)} hops, total length ≈ {total_length:.1f} units.")
 
-# --- Plot 2: Zoomed-in close-up on path ---
-ax = axes[1]
-ax.set_title("Zoomed-in Route Close-up")
+# 4) Prepare for animation: positions are the coordinates themselves
+pos = {n: n for n in G_boston.nodes}
 
-for u, v in G.edges():
-    x = [u[0], v[0]]
-    y = [u[1], v[1]]
-    ax.plot(x, y, color='lightgray', linewidth=1)
+# 5) Plot the entire graph in light grey
+plt.ion()
+fig, ax = plt.subplots(figsize=(8, 8))
+nx.draw(G_boston, pos=pos, node_size=5, edge_color='lightgray', ax=ax)
 
-for i in range(len(path) - 1):
-    x = [path[i][0], path[i+1][0]]
-    y = [path[i][1], path[i+1][1]]
-    ax.plot(x, y, color='blue', linewidth=2)
+# 6) Overlay the A* path in blue
+path_edges = list(zip(path[:-1], path[1:]))
+nx.draw_networkx_edges(G_boston, pos=pos, edgelist=path_edges,
+                       edge_color='blue', width=2.0, ax=ax)
 
-ax.scatter(path_xs, path_ys, color='blue', s=20)
-ax.scatter(*start, color='green', s=100)
-ax.scatter(*end, color='red', s=100)
+# 7) Animate the agent as a red dot
+agent_dot, = ax.plot([], [], 'ro', markersize=8)
+for node in path:
+    x, y = node
+    agent_dot.set_data([x], [y])
+    fig.canvas.draw()
+    plt.pause(0.3)
 
-padding = 50
-ax.set_xlim(min(path_xs) - padding, max(path_xs) + padding)
-ax.set_ylim(min(path_ys) - padding, max(path_ys) + padding)
-ax.set_xlabel("X Coordinate (meters)")
-ax.set_ylabel("Y Coordinate (meters)")
-
-plt.tight_layout()
+plt.ioff()
 plt.show()
