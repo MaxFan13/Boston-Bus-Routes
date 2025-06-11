@@ -1,12 +1,13 @@
 import random
 import math
+import matplotlib.pyplot as plt
 from env import BostonTrafficEnv
 
 # Assume these functions are implemented elsewhere in your project:
 #   stop_placement(start, goal, num_stops) -> list of stops (including start & goal)
 #   generate_routes(stops) -> list of nodes/edges representing full movement sequence
 #   score_calculator(route) -> numeric score (lower is better)
-from your_module import stop_placement, generate_routes, score_calculator
+from local_search_helpers import stop_placement, generate_routes, score_calculator
 
 
 def local_search(env: BostonTrafficEnv,
