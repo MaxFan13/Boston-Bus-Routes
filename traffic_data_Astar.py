@@ -101,30 +101,6 @@ for idx, row in gdf.iterrows():
                    traffic_weight=traffic)
 
 
-# Print total number of nodes and edges
-print("Total nodes:", G_boston.number_of_nodes())
-print("Total edges:", G_boston.number_of_edges())
-
-# --- Pick a node (e.g., first one) ---
-example_node = list(G_boston.nodes)[0]
-print("\nExample node:", example_node)
-
-# --- Neighbors of the node ---
-neighbors = list(G_boston.neighbors(example_node))
-print("Neighbors:", neighbors)
-
-# --- Edges connected to the node and their attributes (weights, etc.) ---
-for neighbor in neighbors:
-    edge_data = G_boston.get_edge_data(example_node, neighbor)
-    print(f"Edge from {example_node} to {neighbor}:")
-    print(f"  Length: {edge_data['length']:.2f}")
-    #print(f"  Segment ID: {edge_data['segment_id']}")
-
-# --- All edges and their weights (lengths) ---
-print("\nAll edges and their weights (first 5 shown):")
-for u, v, data in list(G_boston.edges(data=True))[:5]:
-    print(f"Edge: {u} <-> {v}, Length: {data['length']:.2f}")
-
 
 
 import random
@@ -171,7 +147,7 @@ nx.draw(
 )
 
 # add a colorbar matching the range of your data
-norm = mcolors.Normalize(vmin=min(edge_colors), vmax=max(edge_colors))
+norm = mcolors.Normalize(vmin=min(edge_colors), vmax=max(edge_colors)/2)
 sm = plt.cm.ScalarMappable(cmap=plt.cm.RdYlGn_r, norm=norm)
 sm.set_array([])
 cbar = fig.colorbar(sm, ax=ax, fraction=0.03, pad=0.04)

@@ -1,89 +1,207 @@
-from gym import spaces
+import pandas as pd
+import geopandas as gpd
+import networkx as nx
+from shapely import wkt
 import numpy as np
+import matplotlib.pyplot as plt
+import matplotlib.colors as mcolors
+import random
 
-CELL_SIZE = 500
 
-class BostonGridEnv(gym.Env):
+def euclidean(u, v):
     """
-    A minimal OpenAI Gym environment:
-      - State = integer index of a grid cell [0 .. num_cells-1]
-      - Action space = Discrete(4): 0=North,1=East,2=South,3=West
-      - Agent moves to the neighbor in that direction if available, otherwise stays put
-      - Reward = +1 if agent reaches goal cell, else 0
+    Euclidean distance heuristic for A* on coordinate tuples.
     """
+    return np.hypot(u[0] - v[0], u[1] - v[1])
 
-    metadata = {'render.modes': ['human']}
-    
 
-    def __init__(self, grid_gdf, adj_graph, start_cell=None, goal_cell=None):
-        super(BostonGridEnv, self).__init__()
+def merge_traffic_weights(original_df: pd.DataFrame, traffic_df: pd.DataFrame) -> pd.DataFrame:
+    """
+    Merge traffic weights into the street segment DataFrame.
+    Unmatched segments get weight 0.
+    """
+    merged = original_df.merge(
+        traffic_df[['traffic_weight']],
+        left_index=True, right_index=True,
+        how='left'
+    )
+    merged['traffic_weight'] = merged['traffic_weight'].fillna(0)
+    return merged
 
-        self.grid_gdf = grid_gdf.reset_index(drop=True)
-        self.adj_graph = adj_graph
-        self.num_cells = len(self.grid_gdf)
 
-        self.action_space = spaces.Discrete(4)
-        self.observation_space = spaces.Discrete(self.num_cells)
+class BostonTrafficEnv:
+    """
+    Environment for Boston street network with traffic weights.
 
-        # Choose a random start/goal if not provided
-        if start_cell is None:
-            self.start_cell = np.random.choice(self.num_cells)
-        else:
-            self.start_cell = start_cell
+    Methods:
+      - sample_start_goal(): pick two connected nodes
+      - reset(start=None, goal=None): compute and return full path
+      - step(): advance to next node
+      - render(path=None): draw map + nodes, edges, colorbar, optional path, and agent dot
+      - close(): close figure
+      - astar_path: compute A* path
+      - astar_path_length: compute path length
+    """
+    def __init__(
+        self,
+        street_csv: str = "boston_street_segments_sam_system.csv",
+        traffic_csv: str = "boston_area_with_traffic.csv"
+    ):
+        # Load and filter raw street segments
+        df = pd.read_csv(street_csv)
+        df = df[df["shape_wkt"].notnull() & df["shape_wkt"].apply(lambda x: isinstance(x, str))]
+        if 'NBHD_R' in df.columns:
+            df = df[df['NBHD_R'] == 'BOSTON']
 
-        if goal_cell is None:
-            choices = list(range(self.num_cells))
-            choices.remove(self.start_cell)
-            self.goal_cell = np.random.choice(choices)
-        else:
-            self.goal_cell = goal_cell
+        # Load traffic weights and merge
+        traffic_df = pd.read_csv(traffic_csv)
+        merged = merge_traffic_weights(df, traffic_df)
 
-        self.state = self.start_cell
+        # Parse geometries
+        merged['geometry'] = merged['shape_wkt'].apply(wkt.loads)
+        self.gdf = gpd.GeoDataFrame(merged, geometry='geometry', crs="EPSG:4326")
 
-    def reset(self):
-        self.state = self.start_cell
-        return self.state
+        # Build graph
+        self.G = nx.Graph()
+        for _, row in self.gdf.iterrows():
+            geom = row.geometry
+            parts = [geom] if geom.geom_type == 'LineString' else geom.geoms
+            for part in parts:
+                u = part.coords[0]
+                v = part.coords[-1]
+                self.G.add_edge(u, v,
+                   length=part.length,
+                   traffic_weight=row['traffic_weight'])
 
-    def step(self, action):
-        current = self.state
-        cur_centroid = self.grid_gdf.loc[current].geometry.centroid
-        neighbors = list(self.adj_graph.neighbors(current))
+        self.nodes = list(self.G.nodes)
+        self.fig = None
+        self.ax = None
+        self.agent_dot = None
 
-        new_state = current
-        if neighbors:
-            cx, cy = cur_centroid.x, cur_centroid.y
-            best_dist = float('inf')
-            best_cell = current
+    def sample_start_goal(self):
+        """
+        Randomly pick two distinct nodes in the same connected component.
+        """
+        components = list(nx.connected_components(self.G))
+        comp = random.choice(components)
+        start, goal = random.sample(list(comp), 2)
+        return start, goal
 
-            for n in neighbors:
-                nc = self.grid_gdf.loc[n].geometry.centroid
-                dx, dy = nc.x - cx, nc.y - cy
+    def astar_path(self, start, goal):
+        """
+        Compute A* shortest path from start to goal by 'length'.
+        Returns list of node tuples.
+        """
+        return nx.astar_path(
+            self.G, start, goal,
+            heuristic=euclidean,
+            weight='length'
+        )
 
-                if action == 0 and (dy > 0 and abs(dx) < CELL_SIZE/2):  # North
-                    dist = abs(dy)
-                elif action == 1 and (dx > 0 and abs(dy) < CELL_SIZE/2):  # East
-                    dist = abs(dx)
-                elif action == 2 and (dy < 0 and abs(dx) < CELL_SIZE/2):  # South
-                    dist = abs(dy)
-                elif action == 3 and (dx < 0 and abs(dy) < CELL_SIZE/2):  # West
-                    dist = abs(dx)
-                else:
-                    continue
+    def astar_path_length(self, start, goal) -> float:
+        """
+        Compute total length of A* path.
+        """
+        return nx.astar_path_length(
+            self.G, start, goal,
+            heuristic=euclidean,
+            weight='length'
+        )
 
-                if dist < best_dist:
-                    best_dist = dist
-                    best_cell = n
+    def reset(self, start=None, goal=None):
+        """
+        Initialize a new path. If start/goal None, pick a random reachable pair.
+        Returns the full path list.
+        """
+        if start is None or goal is None:
+            start = self.nodes[random.randint(0, len(self.nodes) - 1)]
+            goal = self.nodes[random.randint(0, len(self.nodes) - 1)]
+        self.start = start
+        self.goal = goal
+        try:
+            self.path = self.astar_path(start, goal)
+        except nx.NetworkXNoPath:
+            raise ValueError(f"No path between {start} and {goal}")
+        self._step = 0
+        return self.path
 
-            new_state = best_cell
+    def step(self):
+        """
+        Advance the agent to the next node on the current path.
+        Returns: (node, done)
+        """
+        if self._step < len(self.path) - 1:
+            self._step += 1
+        node = self.path[self._step]
+        done = (self._step == len(self.path) - 1)
+        return node, done
 
-        self.state = new_state
-        done = (self.state == self.goal_cell)
-        reward = 1.0 if done else 0.0
-        info = {}
-        return self.state, reward, done, info
+    def render(self, path=None, cmap=plt.cm.RdYlGn_r, figsize=(15,12)):
+        """
+        Draw the street network with traffic-color edges, node points, colorbar,
+        optionally overlay the A* path in blue, and initialize the agent dot.
+        Call once before stepping.
 
-    def render(self, mode='human'):
-        print(f"Agent at cell {self.state}, Goal = {self.goal_cell}.")
+        Args:
+          path (list of node tuples, optional): sequence to highlight
+        """
+        self.fig, self.ax = plt.subplots(figsize=figsize)
+        # Position dict
+        pos = {n: n for n in self.G.nodes}
+        # Draw nodes
+        nx.draw_networkx_nodes(
+            self.G,
+            pos=pos,
+            node_size=5,
+            node_color='lightblue',
+            ax=self.ax
+        )
+        # Draw base edges colored by traffic_weight
+        edge_colors = [d['traffic_weight'] for _, _, d in self.G.edges(data=True)]
+        nx.draw_networkx_edges(
+            self.G,
+            pos=pos,
+            edge_color=edge_colors,
+            edge_cmap=cmap,
+            width=2,
+            ax=self.ax
+        )
+        # Add colorbar
+        norm = mcolors.Normalize(vmin=min(edge_colors), vmax=max(edge_colors))
+        sm = plt.cm.ScalarMappable(cmap=cmap, norm=norm)
+        sm.set_array([])
+        cbar = self.fig.colorbar(sm, ax=self.ax, fraction=0.03, pad=0.04)
+        cbar.set_label('Traffic Weight')
+        # Overlay path if provided
+        if path and len(path) > 1:
+            path_edges = list(zip(path[:-1], path[1:]))
+            nx.draw_networkx_edges(
+                self.G,
+                pos=pos,
+                edgelist=path_edges,
+                edge_color='blue',
+                width=2.5,
+                ax=self.ax
+            )
+        # Agent marker
+        self.agent_dot, = self.ax.plot([], [], 'ro', markersize=8)
+        self.ax.set_title('Boston Traffic Environment')
+        return self.fig, self.ax
 
-    def seed(self, seed=None):
-        np.random.seed(seed)
+    def close(self):
+        """
+        Close the rendering window.
+        """
+        if self.fig:
+            plt.close(self.fig)
+
+# Example usage:
+# env = BostonTrafficEnv()
+# path = env.reset()
+# fig, ax = env.render(path=path)
+# for node in path:
+#     x, y = node
+#     env.agent_dot.set_data([x], [y])
+#     fig.canvas.draw()
+#     plt.pause(0.3)
+# env.close()
