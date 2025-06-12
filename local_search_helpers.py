@@ -39,7 +39,7 @@ def generate_routes(stop_sequence, graph):
                 resulting_route.append(from_stop)
 
             # Use the segment id to represent the edge - can change if needed
-            resulting_route.append(edge['segment_id'])
+            resulting_route.append(edge['SEGMENT_ID'])
             
             resulting_route.append(to_stop)
 
