@@ -10,6 +10,14 @@ Contains helper functions for Simmulated Annealing Local Search
 """
 
 import networkx as nx
+import random
+
+def stop_placement(env, start, goal, num_stops):
+    possible_stops = [node for node in env.nodes if node not in {start, goal}]
+    stops = random.sample(possible_stops, num_stops)
+    stop_sequence = [start] + stops + [goal]
+
+    return stop_sequence
 
 def generate_routes(stop_sequence, graph):
     resulting_route = []
