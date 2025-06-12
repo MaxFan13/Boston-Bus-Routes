@@ -71,7 +71,8 @@ class BostonTrafficEnv:
                 v = part.coords[-1]
                 self.G.add_edge(u, v,
                    length=part.length,
-                   traffic_weight=row['traffic_weight'])
+                   traffic_weight=row['traffic_weight'],
+                    SEGMENT_ID=row['SEGMENT_ID'])
 
         self.nodes = list(self.G.nodes)
         self.fig = None
