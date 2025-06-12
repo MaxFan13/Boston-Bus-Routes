@@ -206,3 +206,26 @@ class BostonTrafficEnv:
 #     fig.canvas.draw()
 #     plt.pause(0.3)
 # env.close()
+
+# Example usage (use of first two helper functions)
+# from local_search_helpers import *
+# env = BostonTrafficEnv()
+# s, g = env.sample_start_goal() 
+# stops = stop_placement(env, s, g, 4)
+# routes = generate_routes(stops, env.G)
+# route_nodes = [item for item in routes if isinstance(item, tuple)]
+# fig, ax = env.render(path=route_nodes, figsize=(12, 8))
+# ax.plot(s[0], s[1], marker='o', color='green', markersize=10, label='Start')
+# ax.plot(g[0], g[1], marker='*', color='red', markersize=12, label='Goal')
+# for i in range(len(stops)):
+#     stop = stops[i]
+#     if stop != s and stop != g:
+#         ax.plot(stop[0], stop[1], marker='s', color='orange', markersize=8, label=f'Stop {i}')
+#         ax.text(stop[0], stop[1], str(i), fontsize=9, ha='center', va='center', color='black')
+# ax.legend()
+# for node in route_nodes:
+#     x, y = node
+#     env.agent_dot.set_data([x], [y])
+#     fig.canvas.draw()
+#     plt.pause(0.00001)
+# env.close()
