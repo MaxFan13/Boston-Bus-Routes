@@ -44,8 +44,8 @@ class BostonTrafficEnv:
     """
     def __init__(
         self,
-        street_csv: str = "data/boston_street_segments_sam_system.csv",
-        traffic_csv: str = "data/boston_area_with_traffic.csv"
+        street_csv: str = "boston_street_segments_sam_system.csv",
+        traffic_csv: str = "boston_area_with_traffic.csv"
     ):
         # Load and filter raw street segments
         df = pd.read_csv(street_csv)
