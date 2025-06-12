@@ -29,7 +29,7 @@ def generate_routes(stop_sequence, graph):
         ## Get a path between two points from graph 
         from_to_path = nx.shortest_path(graph, from_point, to_point, 'weight')
 
-        for j in len(from_to_path) - 1:
+        for j in range(len(from_to_path) - 1):
             from_stop, to_stop = from_to_path[j], from_to_path[j + 1]
             edge = graph.get_edge_data(from_stop, to_stop)
 
