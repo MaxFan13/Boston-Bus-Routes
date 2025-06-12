@@ -83,8 +83,8 @@ class BostonTrafficEnv:
         Randomly pick two distinct nodes in the same connected component.
         """
         components = list(nx.connected_components(self.G))
-        comp = random.choice(components)
-        start, goal = random.sample(list(comp), 2)
+        largest_comp = max(components, key=len)
+        start, goal = random.sample(list(largest_comp), 2)
         return start, goal
 
     def astar_path(self, start, goal):
