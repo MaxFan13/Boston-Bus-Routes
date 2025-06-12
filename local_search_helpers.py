@@ -22,7 +22,7 @@ def stop_placement(env, start, goal, num_stops):
 def generate_routes(stop_sequence, graph):
     resulting_route = []
 
-    for i in len(stop_sequence) - 1:
+    for i in range(len(stop_sequence) - 1):
         from_point = stop_sequence[i]
         to_point = stop_sequence[i+1]
 
