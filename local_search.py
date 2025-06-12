@@ -33,7 +33,7 @@ def local_search(env: BostonTrafficEnv,
         best_score: score of the best route
     """
     # Initialize with a random placement
-    current_stops = stop_placement(start, goal, num_stops)
+    current_stops = stop_placement(env, start, goal, num_stops)
     current_route = generate_routes(current_stops)
     current_score = score_calculator(current_route)
 
