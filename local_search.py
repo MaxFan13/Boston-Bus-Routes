@@ -2,37 +2,20 @@ import random
 import math
 import matplotlib.pyplot as plt
 from env import BostonTrafficEnv
-
-# Assume these functions are implemented elsewhere in your project:
-#   stop_placement(start, goal, num_stops) -> list of stops (including start & goal)
-#   generate_routes(stops) -> list of nodes/edges representing full movement sequence
-#   score_calculator(route) -> numeric score (lower is better)
 from local_search_helpers import stop_placement, generate_routes, score_calculator
 
 
 def local_search(env: BostonTrafficEnv,
                  start,
                  goal,
-                 num_stops: int,
-                 num_iterations: int = 500,
-                 initial_temp: float = 100.0,
-                 cooling_rate: float = 0.98):
+                 num_stops,
+                 num_iterations=500,
+                 initial_temp=95.0,
+                 cooling_rate=0.98):
     """
-    Simulated-annealing local search to place num_stops stops between start & goal.
-
-    Args:
-        env: BostonTrafficEnv instance for routing
-        start, goal: start and goal node tuples
-        num_stops: number of intermediate stops to generate
-        num_iterations: total SA iterations
-        initial_temp: starting temperature
-        cooling_rate: multiplicative cooling rate per iteration
-    Returns:
-        best_stops: list of node tuples (including start & goal)
-        best_route: list of nodes/edges for the best route
-        best_score: score of the best route
+    Simulated-annealing local search using env for routing and the helper functions.
+    Returns best_stops, best_route (list of node tuples), and best_score.
     """
-    # Initialize with a random placement
     current_stops = stop_placement(env, start, goal, num_stops)
     current_route = generate_routes(current_stops, env.G)
     current_score = score_calculator(current_route, env.G)
@@ -40,24 +23,24 @@ def local_search(env: BostonTrafficEnv,
     best_stops, best_route, best_score = list(current_stops), current_route, current_score
     T = initial_temp
 
-    for i in range(num_iterations):
-        # Propose a neighbor: new random stop placement
+    for _ in range(num_iterations):
         candidate_stops = stop_placement(env, start, goal, num_stops)
         candidate_route = generate_routes(candidate_stops, env.G)
         candidate_score = score_calculator(candidate_route, env.G)
 
         delta = candidate_score - current_score
-        # Accept if better, or with probability exp(-delta/T)
         if delta < 0 or random.random() < math.exp(-delta / T):
             current_stops, current_route, current_score = (
-                candidate_stops, candidate_route, candidate_score
+                candidate_stops,
+                candidate_route,
+                candidate_score
             )
-            # Update global best
             if current_score < best_score:
                 best_stops, best_route, best_score = (
-                    list(current_stops), current_route, current_score
+                    list(current_stops),
+                    current_route,
+                    current_score
                 )
-        # Cool down
         T *= cooling_rate
         if T < 1e-6:
             break
@@ -66,32 +49,84 @@ def local_search(env: BostonTrafficEnv,
 
 
 def main():
-    # Create environment
+    # Initialize environment
     env = BostonTrafficEnv(
         street_csv="boston_street_segments_sam_system.csv",
         traffic_csv="boston_area_with_traffic.csv"
     )
-    # Sample a valid pair
+
+    #Uncomment to get a random start and end goal
+    """
     start, goal = env.sample_start_goal()
+    start_idx = env.nodes.index(start)
+    goal_idx = env.nodes.index(goal)
+    """
+    start = (-71.05652714499996, 42.36661668700003)
+    goal  = (-71.06240483799996, 42.364902536000045)
+    stops = [
+    start,
+    (-71.08347291999996, 42.34410348800003),
+    (-71.05378338899999, 42.35742503700004),
+    (-71.10056949699998, 42.34938674000006),
+    (-71.07889506799995, 42.35324375000005),
+    (-71.08023887299998, 42.34534430300005),
+    goal
+]
     print(f"Start: {start}, Goal: {goal}")
 
-    # Run local search
+    # Run local search to get the best stops and route
     best_stops, best_route, best_score = local_search(
-        env, start, goal, num_stops=5,
-        num_iterations=1000,
-        initial_temp=50.0,
-        cooling_rate=0.999
+        env,
+        start,
+        goal,
+        num_stops=5,
+        num_iterations=500,
+        initial_temp=100.0,
+        cooling_rate=0.98
     )
-
-    print("Best stops sequence:", best_stops)
     print(f"Best score: {best_score:.3f}")
-    # Optionally visualize the best route
+    print(f"Best stops: {best_stops}")
+    # How many nodes are in the best path?
+    num_nodes = len(best_route)
+    print(f"Number of nodes in best path: {num_nodes}")
+
+    # Calculate total traveled distance along the full path
+    total_traveled = 0.0
+    ...
+
+
+    # Calculate total traveled distance along the full path
+    total_traveled = 0.0
+    for u, v in zip(best_route[:-1], best_route[1:]):
+        edge_data = env.G.get_edge_data(u, v)
+        # handle multi-edge dicts by picking the first entry if needed
+        if isinstance(edge_data, dict) and 'length' not in edge_data:
+            edge_data = list(edge_data.values())[0]
+        total_traveled += edge_data['length']
+    print(f"Total distance traveled along optimized route: {total_traveled * 100} units")
+
+
+    # Animate best route with stops highlighted
+    plt.ion()
     fig, ax = env.render(path=best_route)
-    env.agent_dot.set_data([best_route[0][0]], [best_route[0][1]])  # initial dot
-    # Draw the route line
-    xs, ys = zip(*best_route)
-    ax.plot(xs, ys, linestyle='--', color='blue', linewidth=2)
+
+
+    if best_stops:
+        xs, ys = zip(*best_stops)
+        ax.scatter(xs, ys, c='red', s=30, marker='o', zorder=5, label='Stops')
+        ax.legend(loc='upper right')
+
+    plt.show(block=False)
+    for node in best_route:
+        x, y = node
+        env.agent_dot.set_data([x], [y])
+        fig.canvas.draw()
+        plt.pause(0.3)
+
+    # Finalize display
+    plt.ioff()
     plt.show()
+    env.close()
 
 
 if __name__ == "__main__":
