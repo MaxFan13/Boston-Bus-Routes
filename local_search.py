@@ -49,32 +49,24 @@ def local_search(env: BostonTrafficEnv,
 
 
 def main():
-    # Initialize environment
     env = BostonTrafficEnv(
         street_csv="boston_street_segments_sam_system.csv",
         traffic_csv="boston_area_with_traffic.csv"
     )
 
-    #Uncomment to get a random start and end goal
+    #Uncomment to use a random start and end goal
+    
+    start = (-71.05652714499996, 42.36661668700003)
+    goal  = (-71.06240483799996, 42.364902536000045)
+    stops = [start,(-71.08347291999996, 42.34410348800003),(-71.05378338899999, 42.35742503700004),(-71.10056949699998, 42.34938674000006),
+             (-71.07889506799995, 42.35324375000005),(-71.08023887299998, 42.34534430300005),goal]
     """
     start, goal = env.sample_start_goal()
     start_idx = env.nodes.index(start)
     goal_idx = env.nodes.index(goal)
     """
-    start = (-71.05652714499996, 42.36661668700003)
-    goal  = (-71.06240483799996, 42.364902536000045)
-    stops = [
-    start,
-    (-71.08347291999996, 42.34410348800003),
-    (-71.05378338899999, 42.35742503700004),
-    (-71.10056949699998, 42.34938674000006),
-    (-71.07889506799995, 42.35324375000005),
-    (-71.08023887299998, 42.34534430300005),
-    goal
-]
     print(f"Start: {start}, Goal: {goal}")
 
-    # Run local search to get the best stops and route
     best_stops, best_route, best_score = local_search(
         env,
         start,
@@ -86,17 +78,11 @@ def main():
     )
     print(f"Best score: {best_score:.3f}")
     print(f"Best stops: {best_stops}")
-    # How many nodes are in the best path?
     num_nodes = len(best_route)
     print(f"Number of nodes in best path: {num_nodes}")
 
-    # Calculate total traveled distance along the full path
     total_traveled = 0.0
-    ...
 
-
-    # Calculate total traveled distance along the full path
-    total_traveled = 0.0
     for u, v in zip(best_route[:-1], best_route[1:]):
         edge_data = env.G.get_edge_data(u, v)
         # handle multi-edge dicts by picking the first entry if needed
@@ -106,10 +92,8 @@ def main():
     print(f"Total distance traveled along optimized route: {total_traveled * 100} units")
 
 
-    # Animate best route with stops highlighted
     plt.ion()
     fig, ax = env.render(path=best_route)
-
 
     if best_stops:
         xs, ys = zip(*best_stops)
@@ -123,7 +107,6 @@ def main():
         fig.canvas.draw()
         plt.pause(0.3)
 
-    # Finalize display
     plt.ioff()
     plt.show()
     env.close()

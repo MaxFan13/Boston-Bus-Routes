@@ -47,21 +47,17 @@ class BostonTrafficEnv:
         street_csv: str = "boston_street_segments_sam_system.csv",
         traffic_csv: str = "boston_area_with_traffic.csv"
     ):
-        # Load and filter raw street segments
         df = pd.read_csv(street_csv)
         df = df[df["shape_wkt"].notnull() & df["shape_wkt"].apply(lambda x: isinstance(x, str))]
         if 'NBHD_R' in df.columns:
             df = df[df['NBHD_R'] == 'BOSTON']
 
-        # Load traffic weights and merge
         traffic_df = pd.read_csv(traffic_csv)
         merged = merge_traffic_weights(df, traffic_df)
 
-        # Parse geometries
         merged['geometry'] = merged['shape_wkt'].apply(wkt.loads)
         self.gdf = gpd.GeoDataFrame(merged, geometry='geometry', crs="EPSG:4326")
 
-        # Build graph
         self.G = nx.Graph()
         for _, row in self.gdf.iterrows():
             geom = row.geometry
@@ -149,7 +145,6 @@ class BostonTrafficEnv:
         self.fig, self.ax = plt.subplots(figsize=figsize)
         # Position dict
         pos = {n: n for n in self.G.nodes}
-        # Draw nodes
         nx.draw_networkx_nodes(
             self.G,
             pos=pos,
@@ -157,7 +152,6 @@ class BostonTrafficEnv:
             node_color='lightblue',
             ax=self.ax
         )
-        # Draw base edges colored by traffic_weight
         edge_colors = [d['traffic_weight'] for _, _, d in self.G.edges(data=True)]
         nx.draw_networkx_edges(
             self.G,
@@ -167,7 +161,7 @@ class BostonTrafficEnv:
             width=2,
             ax=self.ax
         )
-        # Add colorbar
+        #Scale for weight
         norm = mcolors.Normalize(vmin=min(edge_colors), vmax=max(edge_colors))
         sm = plt.cm.ScalarMappable(cmap=cmap, norm=norm)
         sm.set_array([])
