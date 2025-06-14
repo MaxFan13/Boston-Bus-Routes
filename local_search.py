@@ -34,17 +34,17 @@ def local_search(env: BostonTrafficEnv,
     """
     # Initialize with a random placement
     current_stops = stop_placement(env, start, goal, num_stops)
-    current_route = generate_routes(current_stops)
-    current_score = score_calculator(current_route)
+    current_route = generate_routes(current_stops, env.G)
+    current_score = score_calculator(current_route, env.G)
 
     best_stops, best_route, best_score = list(current_stops), current_route, current_score
     T = initial_temp
 
     for i in range(num_iterations):
         # Propose a neighbor: new random stop placement
-        candidate_stops = stop_placement(start, goal, num_stops)
-        candidate_route = generate_routes(candidate_stops)
-        candidate_score = score_calculator(candidate_route)
+        candidate_stops = stop_placement(env, start, goal, num_stops)
+        candidate_route = generate_routes(candidate_stops, env.G)
+        candidate_score = score_calculator(candidate_route, env.G)
 
         delta = candidate_score - current_score
         # Accept if better, or with probability exp(-delta/T)
