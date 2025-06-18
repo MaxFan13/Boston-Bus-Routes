@@ -28,5 +28,5 @@ While our results can be used for future optimization, it doesn’t guarantee th
 
 
 ## Demo:
-A*: https://youtu.be/bmu1eA3km90 \\
+A*: https://youtu.be/bmu1eA3km90  
 Local Search: https://youtu.be/HkrQokFwQaU
