@@ -17,10 +17,10 @@ traffic_data_Astar.py: runs an A* search on the environment
 Run local_search.py or traffic_data_Astar.py to see the respective search algorithm run.
 
 ## Optimizations:
-In our testing, we used the following hyperparameters for local search:
-num_stops=5,
-num_iterations=500,
-initial_temp=0.95,
+In our testing, we used the following hyperparameters for local search:  
+num_stops=5,  
+num_iterations=500,  
+initial_temp=0.95,  
 cooling_rate=0.98
 
 ## Results:
