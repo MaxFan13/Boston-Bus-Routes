@@ -4,12 +4,17 @@ A python tool that finds the optimal bus stop placements in boston comparing A* 
 ## Background
 Public transit in dense urban areas often faces challenges with delays and traffic that cause the people who rely on transportation to feel frustrated. The efficiency of public transportation can be improved by optimizing routes and moving stops to encourage people to switch from cars to buses and ultimately reduce traffic. This project uses public Boston traffic data and implements an A* and a local search algorithm to compare the fastest path with the path with most traffic reduction. The result gives a framework for designing more reliable and efficient bus services for the city of Boston.
 
-## How it's made:
-We used two datasets, one from google maps and another straight from the Boston government (https://data.boston.gov/dataset/traffic-related-data), that detail the street segments, traffic, coordinates, and more of the city of Boston. We created a environment map of Boston using GeoPandas and overlayed the traffic weights using networkX. Then we built the A* and local search algorithms. For the local search, we developed 3 helper functions:
-1) stop_placement(): randomly generates stops on the route
-2) generate_routes(): stitches stops via the shortest path
-3) score_calculator(): returns a score based on the traffic reduced
-We made this a minimization problem where we tried getting the reward as low (negative) as possible. Our penalites include any increase in the path length and visting more nodes.
+## Overview:
+Astar.py: Original test on base map (no traffic weights)
+boston_area_with_traffic.csv: csv file containing boston traffic data
+boston_street_segmets_sam_system.csv: csv file containing boston map data
+env.py: the map environment
+local_search.py: runs a local search algorithm on the environment
+local_search_helpers.py: local search help functions
+traffic_data_Astar.py: runs an A* search on the environment
+
+### How to run:
+Run local_search.py or traffic_data_Astar.py to see the respective search algorithm run.
 
 ## Optimizations:
 In our testing, we used the following hyperparameters for local search:
@@ -23,8 +28,6 @@ We found A* and local search on average visit the same amount of nodes (160), bu
 
 ## Future Work:
 While our results can be used for future optimization, it doesn’t guarantee that citizens would switch from personal vehicles to public transportation. Transportation routes should also be fixed. Our program doesn’t guarantee the optimized route would positively impact the congestion alleviation all the time. Future work could include implementing real time or more updated traffic data, using other agents (cars) to simulate a more realistic scenario, or using housing and building data to optimize routes matching a majority of passengers’ lifestyle.
-
-
 
 
 ## Demo:
