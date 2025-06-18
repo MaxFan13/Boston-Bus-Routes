@@ -4,6 +4,7 @@ import matplotlib.colors as mcolors
 from env import BostonTrafficEnv
 import random
 import itertools
+from local_search_helpers import stop_placement, generate_routes, score_calculator
 
 env = BostonTrafficEnv(
     street_csv="boston_street_segments_sam_system.csv",
@@ -12,15 +13,7 @@ env = BostonTrafficEnv(
 
 start = (-71.05652714499996, 42.36661668700003)
 goal  = (-71.06240483799996, 42.364902536000045)
-stops = [
-    start,
-    (-71.08347291999996, 42.34410348800003),
-    (-71.05378338899999, 42.35742503700004),
-    (-71.10056949699998, 42.34938674000006),
-    (-71.07889506799995, 42.35324375000005),
-    (-71.08023887299998, 42.34534430300005),
-    goal
-]
+stops = [(-71.05652714499996, 42.36661668700003), (-71.07889506799995, 42.35324375000005), (-71.09842382299996, 42.34075869800006), (-71.07383551399994, 42.35285836600008), (-71.05743745899997, 42.35064889500006), (-71.08620486499996, 42.34990945800007), (-71.06240483799996, 42.364902536000045)]
 print(f"Original stops order: {stops}")
 
 #Sort intermediate stops to minimize total network distance between consecutive stops
@@ -49,7 +42,12 @@ for i in range(len(stops) - 1):
         segment = segment[1:]
     full_path.extend(segment)
 
-#Render base map with traffic weights and overlay the full path
+num_nodes = len(full_path)
+print(f"Total nodes visited: {num_nodes}")
+score = score_calculator(full_path, env.G)
+print(f"Score: {score}")
+
+#Render map with traffic weights and overlay the path
 plt.ion()
 fig, ax = env.render(path=full_path)
 plt.show(block=False)
@@ -58,6 +56,7 @@ plt.show(block=False)
 xs, ys = zip(*stops)
 ax.scatter(xs, ys, c='red', s=50, marker='o', zorder=5, label='Stops')
 ax.legend(loc='upper right')
+
 
 #Animating the agent
 agent_dot, = ax.plot([], [], 'ro', markersize=8)
