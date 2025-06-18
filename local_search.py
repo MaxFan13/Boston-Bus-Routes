@@ -73,7 +73,7 @@ def main():
         goal,
         num_stops=5,
         num_iterations=500,
-        initial_temp=100.0,
+        initial_temp=0.95,
         cooling_rate=0.98
     )
     print(f"Best score: {best_score:.3f}")
