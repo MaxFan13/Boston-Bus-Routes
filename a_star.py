@@ -11,7 +11,7 @@ def a_star(graph, start, goal, heuristics):
 
     # Note: our first approach for A star was storing full path in each node, 
     but that design added computation time. Therefore, we optimized it by 
-    storing f_score and current node in the queue and reconstructing the path 
+    storing g_score and current node in the queue and reconstructing the path 
     at the end using came_from dictionary that tracks the previous node for each visited node.
     """
     q = []
