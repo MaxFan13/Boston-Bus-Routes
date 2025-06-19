@@ -5,6 +5,7 @@ from env import BostonTrafficEnv
 import random
 import itertools
 from local_search_helpers import stop_placement, generate_routes, score_calculator
+from a_star import *
 
 env = BostonTrafficEnv(
     street_csv="boston_street_segments_sam_system.csv",
