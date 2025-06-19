@@ -6,7 +6,7 @@ import numpy as np
 import matplotlib.pyplot as plt
 import matplotlib.colors as mcolors
 import random
-
+from a_star import *
 
 def euclidean(u, v):
     """
