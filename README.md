@@ -6,6 +6,7 @@ Public transit in dense urban areas often faces challenges with delays and traff
 
 ## Overview:
 Astar.py: Original test on base map (no traffic weights)  
+a_star.py: a star search code to find the shortest path and the total path cost
 boston_area_with_traffic.csv: csv file containing boston traffic data  
 boston_street_segmets_sam_system.csv: csv file containing boston map data  
 env.py: the map environment  
