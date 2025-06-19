@@ -2,6 +2,7 @@ import random
 import networkx as nx
 import numpy as np
 import matplotlib.pyplot as plt
+from a_star import *
 
 # Import the pre‐computed grid and adjacency graph
 from boston_map_grid import fishnet_clipped, G
@@ -20,8 +21,8 @@ def heuristic(u, v):
     return np.hypot(x1 - x2, y1 - y2)
 
 # 3) Run A* (using the edge attribute “weight” for cost)
-path = nx.astar_path(G, start, goal, heuristic=heuristic, weight='weight')
-path_length = nx.astar_path_length(G, start, goal, heuristic=heuristic, weight='weight')
+path = astar_path(G, start, goal, heuristic=heuristic, weight='weight')
+path_length = astar_path_length(G, start, goal, heuristic=heuristic, weight='weight')
 print(f"Found path of {len(path)} steps, total distance ≈ {path_length:.2f}")
 
 # 4) Prepare for plotting and animation
