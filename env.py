@@ -89,21 +89,25 @@ class BostonTrafficEnv:
         Compute A* shortest path from start to goal by 'length'.
         Returns list of node tuples.
         """
-        return nx.astar_path(
-            self.G, start, goal,
-            heuristic=euclidean,
-            weight='length'
-        )
+        path, cost = a_star(self.G, start, goal, heuristics=euclidean)
+        return path
+        # return nx.astar_path(
+        #     self.G, start, goal,
+        #     heuristic=euclidean,
+        #     weight='length'
+        # )
 
     def astar_path_length(self, start, goal) -> float:
         """
         Compute total length of A* path.
         """
-        return nx.astar_path_length(
-            self.G, start, goal,
-            heuristic=euclidean,
-            weight='length'
-        )
+        path, cost = a_star(self.G, start, goal, heuristics=euclidean)
+        return cost
+        # return nx.astar_path_length(
+        #     self.G, start, goal,
+        #     heuristic=euclidean,
+        #     weight='length'
+        # )
 
     def reset(self, start=None, goal=None):
         """
