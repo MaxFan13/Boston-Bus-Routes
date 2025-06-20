@@ -6,6 +6,46 @@ from env import *
 
 env = BostonTrafficEnv()
 
+# visualize the map with route generated from A* and local search using the same 
+# start and goal
+def plot_points(ax, start, goal, stops):
+        ax.plot(start[0], start[1], marker='o', color='green', markersize=10, label='Start')
+        ax.plot(goal[0], goal[1], marker='*', color='red', markersize=12, label='Goal')
+        for i, stop in enumerate(stops):
+            if stop != start and stop != goal:
+                ax.plot(stop[0], stop[1], marker='s', color='orange', markersize=8, label=f'Stop {i}')
+        
+        handles, labels = ax.get_legend_handles_labels()
+        by_label = dict(zip(labels, handles))
+        ax.legend(by_label.values(), by_label.keys())
+
+def compare_route(env):
+    start, goal = env.sample_start_goal() 
+    stops = stop_placement(env, start, goal, 5)
+    
+    # A*        
+    _, _, astar_path, _, astar_score = traffic_astar(env, start, goal, stops)
+    astar_nodes = [item for item in astar_path if isinstance(item, tuple)]
+    fig1, ax1 = env.render(path=astar_nodes)
+    ax1.set_title(f"A* Route (Score: {astar_score:.2f})")
+
+    plot_points(ax1, start, goal, stops)
+
+    # local saerch
+    local_stops, local_route, local_score = local_search(env, start, goal, num_stops=5, num_iterations=500, 
+                                               initial_temp=0.95, cooling_rate=0.98)
+    local_nodes = [item for item in local_route if isinstance(item, tuple)]
+    fig2, ax2 = env.render(path=local_nodes)
+    ax2.set_title(f"Local Search Route (Score: {local_score:.2f})")
+    fig, axes = plt.subplots(1, 2, figsize=(18, 8))
+
+    plot_points(ax2, start, goal, local_stops)
+
+    fig1.savefig("astar_route.png")
+    fig2.savefig("local_route.png")
+
+# compare_route(env)
+
 # visualize the score change in one round of local search
 # to observe the decrease in score over time
 def local_search_performance(env, num_rounds=5, num_iter=500):
