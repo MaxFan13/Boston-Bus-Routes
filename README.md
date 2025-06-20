@@ -13,6 +13,7 @@ env.py: the map environment
 local_search.py: runs a local search algorithm on the environment  
 local_search_helpers.py: local search help functions  
 traffic_data_Astar.py: runs an A* search on the environment  
+viz.py: visualizations of local search performance and comparison of two models' performance over multiple rounds
 
 ### How to run:
 Run local_search.py or traffic_data_Astar.py to see the respective search algorithm run.
