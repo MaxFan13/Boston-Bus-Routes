@@ -11,7 +11,8 @@ def local_search(env: BostonTrafficEnv,
                  num_stops,
                  num_iterations=500,
                  initial_temp=95.0,
-                 cooling_rate=0.98):
+                 cooling_rate=0.98,
+                return_history=False):
     """
     Simulated-annealing local search using env for routing and the helper functions.
     Returns best_stops, best_route (list of node tuples), and best_score.
@@ -22,6 +23,7 @@ def local_search(env: BostonTrafficEnv,
 
     best_stops, best_route, best_score = list(current_stops), current_route, current_score
     T = initial_temp
+    score_history = [current_score] if return_history else None
 
     for _ in range(num_iterations):
         candidate_stops = stop_placement(env, start, goal, num_stops)
@@ -41,12 +43,16 @@ def local_search(env: BostonTrafficEnv,
                     current_route,
                     current_score
                 )
+
+        if return_history:
+            score_history.append(current_score)
         T *= cooling_rate
         if T < 1e-6:
             break
-
-    return best_stops, best_route, best_score
-
+    if return_history:
+        return best_stops, best_route, best_score, score_history
+    else:
+        return best_stops, best_route, best_score
 
 def main():
     env = BostonTrafficEnv(
