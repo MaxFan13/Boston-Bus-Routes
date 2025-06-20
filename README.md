@@ -39,8 +39,11 @@ Local Search: https://youtu.be/HkrQokFwQaU
 
 ## References:
 [1] Zarrinmehr, A., Saffarzadeh, M., & Seyedabrishami, S. (2016). A local search algorithm for finding optimal transit routes configuration with elastic demand. International Transactions in Operational Research, 25(5), 1491–1514. https://doi.org/10.1111/itor.12359
+
 [2] Thi, N. T., Vi, N. T. L., Phung, P. T. K., & Van Can, N. (2023). A simulation - Based optimization for bus route design problem. AIP Conference Proceedings, 2562, 090019. https://doi.org/10.1063/5.0110586
+
 [3] Patel, A. J. (2014). Introduction to the A* algorithm.https://www.redblobgames.com/pathfinding/a-star/introduction.html
+
 [4] heapq — Heap queue algorithm. (n.d.). Python Documentation.https://docs.python.org/3/library/heapq.html
 
 
