@@ -38,6 +38,24 @@ def generate_routes(stop_sequence, graph):
 
     return resulting_route
 
+def move_stop(stops, graph, start, goal):
+    new_stops = list(stops)
+
+    # Choose an intermediate stop to move
+    idx = random.choice(range(1, len(stops) - 1))
+    old_node = new_stops[idx]
+
+    # Find its neighbors in the street graph
+    neighs = list(graph.neighbors(old_node))
+    if not neighs:
+        return new_stops
+
+    new_node = random.choice(neighs)
+    new_stops[idx] = new_node
+
+    return new_stops
+
+
 def score_calculator(route, graph):
     traversal_counts = {}
     total_traffic_reduction = 0.0

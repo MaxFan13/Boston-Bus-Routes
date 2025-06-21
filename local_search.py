@@ -2,7 +2,7 @@ import random
 import math
 import matplotlib.pyplot as plt
 from env import BostonTrafficEnv
-from local_search_helpers import stop_placement, generate_routes, score_calculator
+from local_search_helpers import stop_placement, generate_routes, move_stop, score_calculator
 
 
 def local_search(env: BostonTrafficEnv,
@@ -26,7 +26,8 @@ def local_search(env: BostonTrafficEnv,
     score_history = [current_score] if return_history else None
 
     for _ in range(num_iterations):
-        candidate_stops = stop_placement(env, start, goal, num_stops)
+        # inside your local_search loop:
+        candidate_stops = move_stop(current_stops, env.G, start, goal)
         candidate_route = generate_routes(candidate_stops, env.G)
         candidate_score = score_calculator(candidate_route, env.G)
 
