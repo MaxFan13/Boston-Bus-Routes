@@ -5,6 +5,7 @@ Contains helper functions for Simmulated Annealing Local Search
 
   - stop_placement(start, goal, num_stops) -> list of stops (including start & goal)
   - generate_routes(stops) -> list of nodes/edges representing full movement sequence
+  - move_stop(stops, graph, start, goal) -> choose intermediate stop to move and move it to neighboring node
   - score_calculator(route) -> numeric score (lower is better)
 
 """
