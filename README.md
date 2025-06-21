@@ -5,7 +5,6 @@ A python tool that finds the optimal bus stop placements in boston comparing A* 
 Public transit in dense urban areas often faces challenges with delays and traffic that cause the people who rely on transportation to feel frustrated. The efficiency of public transportation can be improved by optimizing routes and moving stops to encourage people to switch from cars to buses and ultimately reduce traffic. This project uses public Boston traffic data and implements an A* and a local search algorithm to compare the fastest path with the path with most traffic reduction. The result gives a framework for designing more reliable and efficient bus services for the city of Boston.
 
 ## Overview:
-Astar.py: Original test on base map (no traffic weights)  
 a_star.py: a star search code to find the shortest path and the total path cost
 boston_area_with_traffic.csv: csv file containing boston traffic data  
 boston_street_segmets_sam_system.csv: csv file containing boston map data  
